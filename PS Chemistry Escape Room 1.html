@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChemLab Lockdown: Digital Escape Room</title>
+<style>
+  :root {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: #1e293b;
+    --accent-cyan: #06b6d4;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-main);
+    line-height: 1.6;
+    padding: 20px;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid var(--border-color);
+    border-top: 4px solid var(--accent-cyan);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: 1.65rem;
+    color: var(--accent-cyan);
+    letter-spacing: 0.5px;
+  }
+
+  .badge {
+    background-color: rgba(6, 182, 212, 0.15);
+    color: var(--accent-cyan);
+    border: 1px solid var(--accent-cyan);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .story-box {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 14px;
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-amber);
+  }
+
+  /* Progress Tracker */
+  .progress-bar-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .progress-step {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+  }
+
+  .progress-step.active {
+    border-color: var(--accent-cyan);
+    color: var(--text-main);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+  }
+
+  .progress-step.unlocked {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: var(--accent-emerald);
+    color: var(--accent-emerald);
+  }
+
+  /* Room Cards */
+  .room-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .room-card.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+  }
+
+  .room-title {
+    font-size: 1.3rem;
+    color: var(--text-main);
+  }
+
+  .room-topic {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent-amber);
+    font-weight: 700;
+  }
+
+  .clue-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin: 18px 0;
+  }
+
+  .clue-item {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .clue-item h4 {
+    color: var(--accent-cyan);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+  }
+
+  .chem-eq {
+    font-family: "Courier New", Courier, monospace;
+    background: #0b1120;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #1e293b;
+    font-size: 1.05rem;
+    color: #e2e8f0;
+    margin: 8px 0;
+    overflow-x: auto;
+  }
+
+  .coef-input {
+    width: 44px;
+    background: #1e293b;
+    border: 1px solid var(--accent-cyan);
+    color: #fff;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 4px;
+    border-radius: 4px;
+    margin: 0 3px;
+  }
+
+  .lock-box {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px dashed var(--accent-cyan);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+
+  .lock-box label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--accent-cyan);
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  input[type="text"], select {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 1rem;
+    flex: 1;
+    min-width: 180px;
+  }
+
+  input[type="text"]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent-cyan);
+  }
+
+  button {
+    background: var(--accent-cyan);
+    color: #0f172a;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+
+  button:hover {
+    background: #22d3ee;
+  }
+
+  button:active {
+    transform: scale(0.98);
+  }
+
+  .btn-hint {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+  }
+
+  .btn-hint:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+  }
+
+  .feedback {
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    min-height: 22px;
+  }
+
+  .feedback.error { color: var(--accent-rose); }
+  .feedback.success { color: var(--accent-emerald); }
+
+  .hint-text {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: rgba(245, 158, 11, 0.1);
+    border-left: 3px solid var(--accent-amber);
+    color: #fcd34d;
+    font-size: 0.88rem;
+    border-radius: 4px;
+  }
+
+  /* Victory Screen */
+  .victory-card {
+    text-align: center;
+    border-color: var(--accent-emerald);
+  }
+
+  .victory-card h2 {
+    color: var(--accent-emerald);
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+  }
+
+  .completion-code-box {
+    background: var(--bg-primary);
+    border: 2px solid var(--accent-emerald);
+    border-radius: 10px;
+    padding: 18px;
+    margin: 20px auto;
+    max-width: 440px;
+  }
+
+  .code-display {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--accent-emerald);
+    letter-spacing: 2px;
+    margin: 8px 0;
+  }
+
+  table.ref-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 0.9rem;
+  }
+
+  table.ref-table th, table.ref-table td {
+    border: 1px solid var(--border-color);
+    padding: 8px 10px;
+    text-align: left;
+  }
+
+  table.ref-table th {
+    background: #0f172a;
+    color: var(--accent-cyan);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="header-top">
+      <h1>⚗️ ChemLab Lockdown: Digital Escape Room</h1>
+      <span class="badge" id="timer-badge">Time: 00:00</span>
+    </div>
+    <div class="story-box">
+      <strong>ALERT:</strong> An automated containment protocol has sealed Laboratory Sector 7! To override the blast doors and escape, you must bypass <strong>4 Security Locks</strong> by solving challenges in Chemical Formulas, Chemical Equations, Balancing Equations, and Reaction Types.
+    </div>
+  </header>
+
+  <div class="progress-bar-container">
+    <div class="progress-step active" id="step-1">🔒 Lock 1: Formulas</div>
+    <div class="progress-step" id="step-2">🔒 Lock 2: Equations</div>
+    <div class="progress-step" id="step-3">🔒 Lock 3: Balancing</div>
+    <div class="progress-step" id="step-4">🔒 Lock 4: Reactions</div>
+  </div>
+
+  <!-- ROOM 1: CHEMICAL FORMULAS -->
+  <div class="room-card active" id="room-1">
+    <div class="room-header">
+      <div>
+        <div class="room-topic">Security Terminal 01</div>
+        <h2 class="room-title">The Reagent Vault (Chemical Formulas)</h2>
+      </div>
+    </div>
+    <p>Four chemical vials sit on the digital scale. Determine the <strong>total number of atoms</strong> in a single formula unit/molecule of each compound to generate the 4-digit keypad PIN.</p>
+
+    <div class="clue-grid">
+      <div class="clue-item">
+        <h4>Digit 1: Calcium Hydroxide</h4>
+        <div class="chem-eq">Ca(OH)<sub>2</sub></div>
+        <p style="font-size:0.88rem; color:var(--text-muted);">Count every Ca, O, and H atom.</p>
+      </div>
+      <div class="clue-item">
+        <h4>Digit 2: Ammonium Sulfate</h4>
+        <div class="chem-eq">(NH<sub>4</sub>)<sub>2</sub>SO<sub>4</sub></div>
+        <p style="font-size:0.88rem; color:var(--text-muted);">Careful with the subscript outside the parentheses!</p>
+      </div>
+      <div class="clue-item">
+        <h4>Digit 3: Glucose</h4>
+        <div class="chem-eq">C<sub>6</sub>H<sub>12</sub>O<sub>6</sub></div>
+        <p style="font-size:0.88rem; color:var(--text-muted);">Sum all atoms in one molecule.</p>
+      </div>
+      <div class="clue-item">
+        <h4>Digit 4: Aluminum Carbonate</h4>
+        <div class="chem-eq">Al<sub>2</sub>(CO<sub>3</sub>)<sub>3</sub></div>
+        <p style="font-size:0.88rem; color:var(--text-muted);">Count Al, C, and O atoms carefully.</p>
+      </div>
+    </div>
+
+    <div class="lock-box">
+      <label for="code-1">Enter 6-Digit Concatenated Code (Digit 1 + Digit 2 + Digit 3 + Digit 4):</label>
+      <div class="input-row">
+        <input type="text" id="code-1" placeholder="e.g., 5121810" maxlength="8">
+        <button onclick="checkRoom1()">Unlock Terminal 01</button>
+      </div>
+      <div class="feedback" id="fb-1"></div>
+      <button class="btn-hint" onclick="toggleHint('hint-1')">Need a Hint?</button>
+      <div class="hint-text" id="hint-1">
+        Multiply subscripts outside parentheses by every subscript inside. For example, in Ca(OH)<sub>2</sub>: 1 Ca + 2 O + 2 H = 5 atoms. Put all four totals together in order without spaces!
+      </div>
+    </div>
+  </div>
+
+  <!-- ROOM 2: CHEMICAL EQUATIONS -->
+  <div class="room-card" id="room-2">
+    <div class="room-header">
+      <div>
+        <div class="room-topic">Security Terminal 02</div>
+        <h2 class="room-title">Deciphering the Lab Log (Chemical Equations)</h2>
+      </div>
+    </div>
+    <p>Inspect the reaction log below to answer the four diagnostic questions. Combine your 4 single-character answers (letters/numbers) to form the password.</p>
+
+    <div class="chem-eq" style="font-size:1.15rem; text-align:center; padding:16px;">
+      Zn(s) + 2HCl(aq) &rarr; ZnCl<sub>2</sub>(aq) + H<sub>2</sub>(g) + Heat
+    </div>
+
+    <div class="clue-grid">
+      <div class="clue-item">
+        <h4>Character 1: State of Matter</h4>
+        <p style="font-size:0.9rem;">What does the symbol <strong>(aq)</strong> indicate about HCl and ZnCl<sub>2</sub>?</p>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">
+          <strong>A)</strong> Dissolved in water<br>
+          <strong>B)</strong> Pure liquid state<br>
+          <strong>C)</strong> Gas phase
+        </p>
+      </div>
+      <div class="clue-item">
+        <h4>Character 2: Products</h4>
+        <p style="font-size:0.9rem;">How many <strong>total chemical products</strong> (compounds/elements) are formed on the right side of the arrow?</p>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">Enter a single digit (e.g., 1, 2, 3).</p>
+      </div>
+      <div class="clue-item">
+        <h4>Character 3: Atom Tally</h4>
+        <p style="font-size:0.9rem;">How many <strong>chlorine (Cl) atoms</strong> are present on the reactant side?</p>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">Enter a single digit.</p>
+      </div>
+      <div class="clue-item">
+        <h4>Character 4: Energy Flow</h4>
+        <p style="font-size:0.9rem;">Because "Heat" appears on the product side, this reaction is:</p>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">
+          <strong>N)</strong> Endothermic<br>
+          <strong>X)</strong> Exothermic
+        </p>
+      </div>
+    </div>
+
+    <div class="lock-box">
+      <label for="code-2">Enter 4-Character Override Password (e.g., B45N):</label>
+      <div class="input-row">
+        <input type="text" id="code-2" placeholder="4-character code" maxlength="4" style="text-transform:uppercase;">
+        <button onclick="checkRoom2()">Unlock Terminal 02</button>
+      </div>
+      <div class="feedback" id="fb-2"></div>
+      <button class="btn-hint" onclick="toggleHint('hint-2')">Need a Hint?</button>
+      <div class="hint-text" id="hint-2">
+        (aq) stands for "aqueous" (dissolved in water). Coefficients multiply every atom in the formula behind them (2HCl has 2 H and 2 Cl). Reactions that release heat are EXOthermic.
+      </div>
+    </div>
+  </div>
+
+  <!-- ROOM 3: BALANCING CHEMICAL EQUATIONS -->
+  <div class="room-card" id="room-3">
+    <div class="room-header">
+      <div>
+        <div class="room-topic">Security Terminal 03</div>
+        <h2 class="room-title">Pressure Stabilizer (Balancing Equations)</h2>
+      </div>
+    </div>
+    <p>To prevent a pressure surge, balance all three equations using the <strong>smallest whole-number coefficients</strong> (enter <strong>1</strong> where no coefficient is written).</p>
+
+    <div class="clue-item" style="margin-bottom:14px;">
+      <h4>Equation A: Iron Rusting</h4>
+      <div class="chem-eq">
+        <input type="number" min="1" max="20" class="coef-input" id="eq1-1"> Fe +
+        <input type="number" min="1" max="20" class="coef-input" id="eq1-2"> O<sub>2</sub> &rarr;
+        <input type="number" min="1" max="20" class="coef-input" id="eq1-3"> Fe<sub>2</sub>O<sub>3</sub>
+      </div>
+    </div>
+
+    <div class="clue-item" style="margin-bottom:14px;">
+      <h4>Equation B: Propane Combustion</h4>
+      <div class="chem-eq">
+        <input type="number" min="1" max="20" class="coef-input" id="eq2-1"> C<sub>3</sub>H<sub>8</sub> +
+        <input type="number" min="1" max="20" class="coef-input" id="eq2-2"> O<sub>2</sub> &rarr;
+        <input type="number" min="1" max="20" class="coef-input" id="eq2-3"> CO<sub>2</sub> +
+        <input type="number" min="1" max="20" class="coef-input" id="eq2-4"> H<sub>2</sub>O
+      </div>
+    </div>
+
+    <div class="clue-item" style="margin-bottom:14px;">
+      <h4>Equation C: Aluminum + Hydrochloric Acid</h4>
+      <div class="chem-eq">
+        <input type="number" min="1" max="20" class="coef-input" id="eq3-1"> Al +
+        <input type="number" min="1" max="20" class="coef-input" id="eq3-2"> HCl &rarr;
+        <input type="number" min="1" max="20" class="coef-input" id="eq3-3"> AlCl<sub>3</sub> +
+        <input type="number" min="1" max="20" class="coef-input" id="eq3-4"> H<sub>2</sub>
+      </div>
+    </div>
+
+    <div class="lock-box">
+      <button onclick="checkRoom3()">Verify Balanced Equations &amp; Unlock</button>
+      <div class="feedback" id="fb-3"></div>
+      <button class="btn-hint" onclick="toggleHint('hint-3')">Need a Hint?</button>
+      <div class="hint-text" id="hint-3">
+        Balance polyatomic/odd oxygen counts using least common multiples. In Equation A, 2 and 3 oxygens meet at 6 (so 3 O<sub>2</sub> and 2 Fe<sub>2</sub>O<sub>3</sub>). In Equation B, balance C first, then H, then O last!
+      </div>
+    </div>
+  </div>
+
+  <!-- ROOM 4: TYPES OF CHEMICAL REACTIONS -->
+  <div class="room-card" id="room-4">
+    <div class="room-header">
+      <div>
+        <div class="room-topic">Final Blast Door — Terminal 04</div>
+        <h2 class="room-title">Reaction Classifier Matrix</h2>
+      </div>
+    </div>
+    <p>Classify each of the five chemical reactions below to disengage the final magnetic seal.</p>
+
+    <table class="ref-table">
+      <thead>
+        <tr>
+          <th>Chemical Equation</th>
+          <th>Reaction Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1. <code>2Mg + O<sub>2</sub> &rarr; 2MgO</code></td>
+          <td>
+            <select id="rxn-1">
+              <option value="">-- Select Type --</option>
+              <option value="synthesis">Synthesis (Combination)</option>
+              <option value="decomposition">Decomposition</option>
+              <option value="single">Single Replacement</option>
+              <option value="double">Double Replacement</option>
+              <option value="combustion">Combustion</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>2. <code>2KClO<sub>3</sub> &rarr; 2KCl + 3O<sub>2</sub></code></td>
+          <td>
+            <select id="rxn-2">
+              <option value="">-- Select Type --</option>
+              <option value="synthesis">Synthesis (Combination)</option>
+              <option value="decomposition">Decomposition</option>
+              <option value="single">Single Replacement</option>
+              <option value="double">Double Replacement</option>
+              <option value="combustion">Combustion</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>3. <code>Cu + 2AgNO<sub>3</sub> &rarr; Cu(NO<sub>3</sub>)<sub>2</sub> + 2Ag</code></td>
+          <td>
+            <select id="rxn-3">
+              <option value="">-- Select Type --</option>
+              <option value="synthesis">Synthesis (Combination)</option>
+              <option value="decomposition">Decomposition</option>
+              <option value="single">Single Replacement</option>
+              <option value="double">Double Replacement</option>
+              <option value="combustion">Combustion</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>4. <code>AgNO<sub>3</sub> + NaCl &rarr; AgCl + NaNO<sub>3</sub></code></td>
+          <td>
+            <select id="rxn-4">
+              <option value="">-- Select Type --</option>
+              <option value="synthesis">Synthesis (Combination)</option>
+              <option value="decomposition">Decomposition</option>
+              <option value="single">Single Replacement</option>
+              <option value="double">Double Replacement</option>
+              <option value="combustion">Combustion</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>5. <code>CH<sub>4</sub> + 2O<sub>2</sub> &rarr; CO<sub>2</sub> + 2H<sub>2</sub>O</code></td>
+          <td>
+            <select id="rxn-5">
+              <option value="">-- Select Type --</option>
+              <option value="synthesis">Synthesis (Combination)</option>
+              <option value="decomposition">Decomposition</option>
+              <option value="single">Single Replacement</option>
+              <option value="double">Double Replacement</option>
+              <option value="combustion">Combustion</option>
+            </select>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="lock-box">
+      <button onclick="checkRoom4()">Open Final Blast Door</button>
+      <div class="feedback" id="fb-4"></div>
+      <button class="btn-hint" onclick="toggleHint('hint-4')">Need a Hint?</button>
+      <div class="hint-text" id="hint-4">
+        • Two reactants forming ONE product = Synthesis.<br>
+        • ONE reactant breaking into multiple products = Decomposition.<br>
+        • One element + one compound &rarr; new element + new compound = Single Replacement.<br>
+        • Two ionic compounds swapping partners = Double Replacement.<br>
+        • Hydrocarbon + O<sub>2</sub> &rarr; CO<sub>2</sub> + H<sub>2</sub>O = Combustion.
+      </div>
+    </div>
+  </div>
+
+  <!-- VICTORY SCREEN -->
+  <div class="room-card victory-card" id="room-victory">
+    <h2>🎉 CONTAINMENT OVERRIDDEN — YOU ESCAPED!</h2>
+    <p>All four security terminals have been bypassed. Enter your name below to generate your Canvas LMS verification code.</p>
+
+    <div style="max-width:400px; margin: 18px auto;">
+      <input type="text" id="student-name" placeholder="Enter your Full Name" oninput="updateVerificationCode()" style="width:100%; text-align:center;">
+    </div>
+
+    <div class="completion-code-box">
+      <div style="font-size:0.85rem; color:var(--text-muted);">CANVAS SUBMISSION VERIFICATION CODE</div>
+      <div class="code-display" id="final-code">CHEM-7742-UNLOCKED</div>
+      <div style="font-size:0.85rem; color:var(--text-muted);" id="final-stats">Completion Time: 00:00</div>
+    </div>
+
+    <p style="font-size:0.9rem; color:var(--text-muted);">
+      Copy the code above (or take a screenshot of this screen) and submit it in your Canvas assignment!
+    </p>
+  </div>
+</div>
+
+<script>
+  let secondsElapsed = 0;
+  let timerInterval = setInterval(() => {
+    secondsElapsed++;
+    const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+    const secs = String(secondsElapsed % 60).padStart(2, '0');
+    document.getElementById('timer-badge').textContent = `Time: ${mins}:${secs}`;
+  }, 1000);
+
+  function toggleHint(id) {
+    const el = document.getElementById(id);
+    el.style.display = el.style.display === 'block' ? 'none' : 'block';
+  }
+
+  function advanceRoom(currentNum, nextNum) {
+    document.getElementById(`room-${currentNum}`).classList.remove('active');
+    const stepCurr = document.getElementById(`step-${currentNum}`);
+    stepCurr.classList.remove('active');
+    stepCurr.classList.add('unlocked');
+    stepCurr.textContent = stepCurr.textContent.replace('🔒', '🔓');
+
+    if (nextNum <= 4) {
+      document.getElementById(`room-${nextNum}`).classList.add('active');
+      document.getElementById(`step-${nextNum}`).classList.add('active');
+    } else {
+      clearInterval(timerInterval);
+      document.getElementById('room-victory').classList.add('active');
+      const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+      const secs = String(secondsElapsed % 60).padStart(2, '0');
+      document.getElementById('final-stats').textContent = `Completion Time: ${mins}:${secs}`;
+      updateVerificationCode();
+    }
+  }
+
+  // Room 1 Check:
+  // Ca(OH)2 = 1 + 2 + 2 = 5
+  // (NH4)2SO4 = 2 + 8 + 1 + 4 = 15
+  // C6H12O6 = 6 + 12 + 6 = 24
+  // Al2(CO3)3 = 2 + 3 + 9 = 14
+  // Code: 5152414
+  function checkRoom1() {
+    const val = document.getElementById('code-1').value.trim();
+    const fb = document.getElementById('fb-1');
+    if (val === '5152414') {
+      fb.className = 'feedback success';
+      fb.textContent = 'ACCESS GRANTED! Unlocking Terminal 02...';
+      setTimeout(() => advanceRoom(1, 2), 900);
+    } else {
+      fb.className = 'feedback error';
+      fb.textContent = 'ACCESS DENIED. Check your atom counts for each formula and concatenate them in order.';
+    }
+  }
+
+  // Room 2 Check:
+  // 1: A (aqueous)
+  // 2: 2 (ZnCl2 and H2)
+  // 3: 2 (2 HCl -> 2 Cl)
+  // 4: X (Exothermic)
+  // Code: A22X
+  function checkRoom2() {
+    const val = document.getElementById('code-2').value.trim().toUpperCase();
+    const fb = document.getElementById('fb-2');
+    if (val === 'A22X') {
+      fb.className = 'feedback success';
+      fb.textContent = 'ACCESS GRANTED! Unlocking Terminal 03...';
+      setTimeout(() => advanceRoom(2, 3), 900);
+    } else {
+      fb.className = 'feedback error';
+      fb.textContent = 'INCORRECT PASSWORD. Re-examine the equation symbols, product count, Cl atoms, and heat placement.';
+    }
+  }
+
+  // Room 3 Check:
+  // Eq 1: 4 Fe + 3 O2 -> 2 Fe2O3
+  // Eq 2: 1 C3H8 + 5 O2 -> 3 CO2 + 4 H2O
+  // Eq 3: 2 Al + 6 HCl -> 2 AlCl3 + 3 H2
+  function checkRoom3() {
+    const e1 = [
+      parseInt(document.getElementById('eq1-1').value),
+      parseInt(document.getElementById('eq1-2').value),
+      parseInt(document.getElementById('eq1-3').value)
+    ];
+    const e2 = [
+      parseInt(document.getElementById('eq2-1').value),
+      parseInt(document.getElementById('eq2-2').value),
+      parseInt(document.getElementById('eq2-3').value),
+      parseInt(document.getElementById('eq2-4').value)
+    ];
+    const e3 = [
+      parseInt(document.getElementById('eq3-1').value),
+      parseInt(document.getElementById('eq3-2').value),
+      parseInt(document.getElementById('eq3-3').value),
+      parseInt(document.getElementById('eq3-4').value)
+    ];
+
+    const fb = document.getElementById('fb-3');
+    const ok1 = (e1[0] === 4 && e1[1] === 3 && e1[2] === 2);
+    const ok2 = (e2[0] === 1 && e2[1] === 5 && e2[2] === 3 && e2[3] === 4);
+    const ok3 = (e3[0] === 2 && e3[1] === 6 && e3[2] === 2 && e3[3] === 3);
+
+    if (ok1 && ok2 && ok3) {
+      fb.className = 'feedback success';
+      fb.textContent = 'PRESSURE STABILIZED! Unlocking Final Terminal...';
+      setTimeout(() => advanceRoom(3, 4), 900);
+    } else {
+      let msg = 'UNBALANCED SYSTEM: Check ';
+      let bad = [];
+      if (!ok1) bad.push('Equation A');
+      if (!ok2) bad.push('Equation B');
+      if (!ok3) bad.push('Equation C');
+      fb.className = 'feedback error';
+      fb.textContent = msg + bad.join(', ') + '. Make sure you entered 1s where needed and used lowest whole numbers.';
+    }
+  }
+
+  // Room 4 Check:
+  // 1: synthesis
+  // 2: decomposition
+  // 3: single
+  // 4: double
+  // 5: combustion
+  function checkRoom4() {
+    const r1 = document.getElementById('rxn-1').value;
+    const r2 = document.getElementById('rxn-2').value;
+    const r3 = document.getElementById('rxn-3').value;
+    const r4 = document.getElementById('rxn-4').value;
+    const r5 = document.getElementById('rxn-5').value;
+    const fb = document.getElementById('fb-4');
+
+    if (r1 === 'synthesis' && r2 === 'decomposition' && r3 === 'single' && r4 === 'double' && r5 === 'combustion') {
+      fb.className = 'feedback success';
+      fb.textContent = 'BLAST DOOR DISENGAGED! Escaping lab...';
+      setTimeout(() => advanceRoom(4, 5), 900);
+    } else {
+      fb.className = 'feedback error';
+      fb.textContent = 'CLASSIFICATION ERROR. One or more reaction types are incorrect.';
+    }
+  }
+
+  function updateVerificationCode() {
+    const nameInput = document.getElementById('student-name').value.trim().toUpperCase();
+    const cleanName = nameInput.replace(/[^A-Z]/g, '').slice(0, 4) || 'CHEM';
+    const checksum = (secondsElapsed % 89) + 10;
+    document.getElementById('final-code').textContent = `${cleanName}-${checksum}42-ESCAPED`;
+  }
+</script>
+
+</body>
+</html>
